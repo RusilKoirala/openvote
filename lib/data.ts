@@ -468,7 +468,14 @@ export async function getElectionData(): Promise<ElectionData> {
         });
         c.candidates.sort((a, b) => b.votes - a.votes);
         c.totalVotes = total;
-        if (c.countingStatus !== "complete" && total > 0) c.countingStatus = "counting";
+        const ekWinner = c.candidates.find((cand) => cand.isWinner);
+        if (ekWinner) {
+          c.countingStatus = "complete";
+          c.countedPercentage = 100;
+          c.winner = ekWinner;
+        } else if (c.countingStatus !== "complete" && total > 0) {
+          c.countingStatus = "counting";
+        }
         c.lastUpdated = new Date().toISOString();
 
       } else if (okCard && okTotal > 0) {
@@ -485,10 +492,24 @@ export async function getElectionData(): Promise<ElectionData> {
         if (totalPatched > 0) {
           c.candidates = sortedCands;
           c.totalVotes = totalPatched;
-          c.candidates.forEach((cand) => {
+          // Propagate winner status from OKhar's isLeading (has-won) flag
+          sortedCands.forEach((cand, i) => {
+            if (i < okSorted.length) {
+              const isWon = okSorted[i].isLeading && !okCard!.counting;
+              cand.isWinner = isWon;
+              cand.status = isWon ? "elected" : (i === 0 ? "leading" : "trailing");
+            }
             cand.percentage = Math.round((cand.votes / totalPatched) * 1000) / 10;
           });
-          c.countingStatus = "counting";
+          if (!okCard!.counting) {
+            // OKhar has declared a result
+            c.countingStatus = "complete";
+            c.countedPercentage = 100;
+            const okWinner = sortedCands.find((cand) => cand.isWinner);
+            if (okWinner) c.winner = okWinner;
+          } else {
+            c.countingStatus = "counting";
+          }
           c.lastUpdated = new Date().toISOString();
         }
       }
