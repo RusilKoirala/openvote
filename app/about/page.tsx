@@ -110,6 +110,14 @@ export default function AboutPage() {
             >
               rusil
             </a>
+            <a
+              href="https://sakshampokharel.me"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-2 hover:text-foreground/80"
+            >
+              && Saksham
+            </a>
             . Built quickly during election night to make results more accessible.
           </p>
         </section>
